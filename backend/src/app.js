@@ -1,8 +1,12 @@
+require('dotenv').config();
+
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+
+const mongoose = require("mongoose");
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -12,6 +16,15 @@ var app = express();
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
+
+// Wait for database to connect, logging an error if there is a problem
+const mongoDB = `mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/temperature`;
+mongoose.set("strictQuery", false);
+main().catch((err) => console.log(err));
+async function main() {
+  console.log('Mongodb connection done');
+  await mongoose.connect(mongoDB);
+}
 
 app.use(logger('dev'));
 app.use(express.json());
