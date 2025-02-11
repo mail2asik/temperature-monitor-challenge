@@ -7,6 +7,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 const mongoose = require("mongoose");
+const temperatureModel = require("./models/temperatureModel");
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
