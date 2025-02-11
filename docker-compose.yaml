@@ -1,0 +1,12 @@
+services:
+
+    #Front End
+    temperature-fe:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+        image: temperature-fe
+        container_name: temperature-fe
+        restart: unless-stopped
+        ports:
+            - "81:80"
