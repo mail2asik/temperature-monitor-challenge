@@ -7,12 +7,37 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 const mongoose = require("mongoose");
-const temperatureModel = require("./models/temperatureModel");
+const http = require('http');
+const socketIo = require('socket.io');
+const cors = require('cors');
+const Temperature = require("./models/temperatureModel");
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+const { time } = require('console');
 
 var app = express();
+
+// Set up CORS options
+const corsOptions = {
+  origin: process.env.CLIENT_APP_HOST, // Replace with your React app URL
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type'],
+  credentials: true
+};
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: process.env.CLIENT_APP_HOST, // Replace with your React app URL
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type'],
+    credentials: true
+  }
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -51,5 +76,70 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+// Socket server listening
+server.listen(process.env.SOCKET_PORT, () => console.log(`Server running on port ${process.env.SOCKET_PORT}`));
+
+// Update every minutes
+const intervals = new Map();
+const updateTemperature = async (socket, city) => {
+  const temperature = await getTemperature(city);
+  socket.emit('temperatureUpdate', { city, temperature, status: (temperature <= process.env.TEMP_NORMAL) ? 'NORMAL' : 'HIGH', timestamp: new Date().toISOString() });
+};
+
+// Handle socket connections
+io.on('connection', (socket) => {
+  console.log('New client connected');
+
+  socket.on('getTemperature', async (city) => {
+    const temperature = await getTemperature(city);
+    socket.emit('temperatureUpdate', { city, temperature, status: (temperature <= process.env.TEMP_NORMAL) ? 'NORMAL' : 'HIGH', timestamp: new Date().toISOString() });
+
+    // Clear any existing interval for this socket
+    if (intervals.has(socket.id)) {
+      clearInterval(intervals.get(socket.id));
+    }
+
+    // Set interval to update temperature every 60 seconds
+    const interval = setInterval(() => updateTemperature(socket, city), 60000);
+    intervals.set(socket.id, interval);
+  });
+
+  socket.on('getRecentTemperatures', async (city) => {
+    const recentTemperatures = await Temperature.find({ city })
+      .sort({ timestamp: -1 }) // Sort by timestamp in descending order
+      .limit(5); // Limit to the most recent 5 records
+
+      socket.emit('recentTemperatures', recentTemperatures);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
+
+    if (intervals.has(socket.id)) {
+      clearInterval(intervals.get(socket.id));
+      intervals.delete(socket.id);
+    }
+  });
+
+});
+
+// Get Temperature from external service
+const getTemperature = async (city) => {
+  const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?appid=c0d70c75baa645f6369b473eea29da75&q=${city}&units=metric`);
+  const data = await response.json();
+  const temperature = data.main.temp;
+
+  // Insert into DB
+  const newTemperature = new Temperature({
+    city,
+    temperature,
+    rawData: data
+  });
+
+  await newTemperature.save();
+
+  return temperature;
+};
 
 module.exports = app;

@@ -9,7 +9,7 @@ services:
         container_name: temperature-fe
         restart: unless-stopped
         ports:
-            - "81:80"
+            - "80:80"
     
     #Back End
     temperature-be:
@@ -20,14 +20,14 @@ services:
         container_name: temperature-be
         restart: unless-stopped
         ports:
-            - "3001:3000"
+            - "3000:3000"
 
     #Mongo DB Service
     mongodb:
       image: mongo:latest
       container_name: temperature-mongodb
       ports:
-        - "27018:27017"
+        - "27017:27017"
       environment:
         MONGO_INITDB_ROOT_USERNAME: root
         MONGO_INITDB_ROOT_PASSWORD: rootPassword

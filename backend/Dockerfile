@@ -5,16 +5,25 @@ FROM node:23-alpine
 WORKDIR /app
 
 # Copy package.json and package-lock.json
-COPY package*.json ./
+COPY src/package*.json ./
 
 # Install dependencies
 RUN npm install
 
 # Copy the rest of the application code
-COPY . .
+COPY src/bin ./bin
+COPY src/models ./models
+COPY src/public ./public
+COPY src/routes ./routes
+COPY src/views ./views
+COPY src/.env ./.env
+COPY src/app.js ./app.js
 
 # Expose the port the app runs on
 EXPOSE 3000
 
+# Expose the port the socket runs on
+EXPOSE 4000
+
 # Define the command to run the app
-CMD ["node", "src/app.js"]
+CMD ["node", "./bin/www"]
