@@ -37,3 +37,6 @@ data/db/
 
 # n8n
 .n8n/
+
+# Mongo db
+data

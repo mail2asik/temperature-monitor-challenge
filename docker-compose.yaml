@@ -21,3 +21,15 @@ services:
         restart: unless-stopped
         ports:
             - "3001:3000"
+
+    #Mongo DB Service
+    mongodb:
+      image: mongo:latest
+      container_name: temperature-mongodb
+      ports:
+        - "27018:27017"
+      environment:
+        MONGO_INITDB_ROOT_USERNAME: root
+        MONGO_INITDB_ROOT_PASSWORD: rootPassword
+      volumes:
+        - ./data/mongodb:/data/db
