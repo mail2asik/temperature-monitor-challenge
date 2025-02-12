@@ -21,6 +21,7 @@ services:
         restart: unless-stopped
         ports:
             - "3000:3000"
+            - "4000:4000"
 
     #Mongo DB Service
     mongodb:
@@ -32,4 +33,10 @@ services:
         MONGO_INITDB_ROOT_USERNAME: root
         MONGO_INITDB_ROOT_PASSWORD: rootPassword
       volumes:
+        - ./volume/mongodb/mongod.conf:/etc/mongod.conf
         - ./data/mongodb:/data/db
+      command: ["mongod", "--config", "/etc/mongod.conf"]
+
+networks:
+  mynetwork:
+    driver: bridge

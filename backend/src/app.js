@@ -126,7 +126,7 @@ io.on('connection', (socket) => {
 
 // Get Temperature from external service
 const getTemperature = async (city) => {
-  const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?appid=c0d70c75baa645f6369b473eea29da75&q=${city}&units=metric`);
+  const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?appid=${process.env.OPEN_WEATHER_APP_KEY}&q=${city}&units=metric`);
   const data = await response.json();
   const temperature = data.main.temp;
 
